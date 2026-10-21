@@ -43,6 +43,32 @@
     </div>
   </main>
 
+  <!-- ADMIN PASSWORD MODAL -->
+  <div class="modal-overlay" id="adminModal">
+    <div class="modal-card" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3>Admin Authorization</h3>
+        <button class="modal-close-btn" id="closeAdminBtn">&times;</button>
+      </div>
+      <form id="adminForm">
+        <div class="modal-body">
+          <p style="font-size: 0.9rem; color: var(--text-muted);">This action is restricted to the administrator. Please enter your admin secret key to proceed.</p>
+          <div class="form-group" style="margin-top: 0.75rem;">
+            <label for="adminPasswordInput">Admin Password</label>
+            <input type="password" id="adminPasswordInput" placeholder="Enter admin password" required autocomplete="current-password">
+          </div>
+          <div id="adminErrorMsg" style="color: var(--accent); font-size: 0.85rem; display: none; margin-top: 6px;">
+            ⚠️ Incorrect password. Please try again.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="cancelAdminBtn">Cancel</button>
+          <button type="submit" class="btn-primary" id="submitAdminBtn">Unlock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- UPLOAD MODAL -->
   <div class="modal-overlay" id="uploadModal">
     <div class="modal-card">

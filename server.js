@@ -5,6 +5,7 @@ const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const ADMIN_UPLOAD_KEY = process.env.ADMIN_KEY || 'admin123';
 
 // Ensure storage folders exist
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
@@ -95,6 +96,15 @@ app.get('/api/videos/:id', (req, res) => {
   res.json(video);
 });
 
+// API: Verify Admin Password
+app.post('/api/verify-admin', (req, res) => {
+  const { key } = req.body;
+  if (key && key === ADMIN_UPLOAD_KEY) {
+    return res.json({ success: true });
+  }
+  return res.status(401).json({ success: false, error: 'Incorrect admin password' });
+});
+
 // API: Upload video
 app.post(
   '/api/upload',
@@ -104,6 +114,16 @@ app.post(
   ]),
   (req, res) => {
     try {
+      const providedKey = req.body.adminKey || req.headers['x-admin-key'];
+      if (!providedKey || providedKey !== ADMIN_UPLOAD_KEY) {
+        // Clean up uploaded files if unauthorized
+        if (req.files) {
+          if (req.files.video && req.files.video[0]) fs.unlinkSync(req.files.video[0].path);
+          if (req.files.thumbnail && req.files.thumbnail[0]) fs.unlinkSync(req.files.thumbnail[0].path);
+        }
+        return res.status(401).json({ error: 'Unauthorized: Invalid admin secret key' });
+      }
+
       if (!req.files || !req.files.video) {
         return res.status(400).json({ error: 'Video file is required' });
       }

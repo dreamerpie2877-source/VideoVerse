@@ -162,10 +162,58 @@ function initUploadModal() {
   const thumbPreviewBox = document.getElementById('thumbPreviewBox');
   const thumbFileInput = document.getElementById('thumbnailFileInput');
 
+  // Admin Modal Elements
+  const adminModal = document.getElementById('adminModal');
+  const closeAdminBtn = document.getElementById('closeAdminBtn');
+  const cancelAdminBtn = document.getElementById('cancelAdminBtn');
+  const adminForm = document.getElementById('adminForm');
+  const adminPasswordInput = document.getElementById('adminPasswordInput');
+  const adminErrorMsg = document.getElementById('adminErrorMsg');
+
   const snapshotVideo = document.getElementById('snapshotVideo');
   const snapshotCanvas = document.getElementById('snapshotCanvas');
 
   let detectedDuration = '0:00';
+
+  function openAdminModal() {
+    adminPasswordInput.value = '';
+    adminErrorMsg.style.display = 'none';
+    adminModal.classList.add('active');
+    setTimeout(() => adminPasswordInput.focus(), 100);
+  }
+
+  function closeAdminModal() {
+    adminModal.classList.remove('active');
+  }
+
+  closeAdminBtn.addEventListener('click', closeAdminModal);
+  cancelAdminBtn.addEventListener('click', closeAdminModal);
+
+  adminForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const enteredKey = adminPasswordInput.value.trim();
+    if (!enteredKey) return;
+
+    try {
+      const res = await fetch('/api/verify-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: enteredKey })
+      });
+
+      if (res.ok) {
+        sessionStorage.setItem('adminKey', enteredKey);
+        closeAdminModal();
+        openModal();
+      } else {
+        adminErrorMsg.style.display = 'block';
+      }
+    } catch (err) {
+      console.error(err);
+      adminErrorMsg.textContent = 'Server connection error. Please try again.';
+      adminErrorMsg.style.display = 'block';
+    }
+  });
 
   function openModal() {
     modal.classList.add('active');
@@ -190,9 +238,23 @@ function initUploadModal() {
     document.getElementById('submitUploadBtn').disabled = false;
   }
 
-  openBtn.addEventListener('click', openModal);
+  openBtn.addEventListener('click', () => {
+    const savedKey = sessionStorage.getItem('adminKey');
+    if (savedKey) {
+      openModal();
+    } else {
+      openAdminModal();
+    }
+  });
+
   closeBtn.addEventListener('click', closeModal);
   cancelBtn.addEventListener('click', closeModal);
+
+  // Auto trigger if redirected with ?upload=1
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('upload') === '1') {
+    openBtn.click();
+  }
 
   // Dropzone drag/drop
   dropzone.addEventListener('click', () => fileInput.click());
@@ -306,6 +368,7 @@ function initUploadModal() {
     formData.append('title', document.getElementById('videoTitle').value);
     formData.append('description', document.getElementById('videoDescription').value);
     formData.append('duration', detectedDuration);
+    formData.append('adminKey', sessionStorage.getItem('adminKey') || '');
 
     const progressWrapper = document.getElementById('uploadProgressWrapper');
     const progressFill = document.getElementById('uploadProgressFill');
@@ -341,6 +404,12 @@ function initUploadModal() {
             loadVideos();
           }
         }, 800);
+      } else if (xhr.status === 401) {
+        sessionStorage.removeItem('adminKey');
+        alert('Unauthorized: Invalid or expired admin password.');
+        closeModal();
+        openAdminModal();
+        submitBtn.disabled = false;
       } else {
         alert('Upload failed: ' + xhr.statusText);
         submitBtn.disabled = false;
