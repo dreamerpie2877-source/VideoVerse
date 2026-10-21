@@ -218,6 +218,98 @@ function initWatchPageActions() {
       postCommentBtn.disabled = false;
     }
   });
+
+  // Delete Video (Admin only)
+  const deleteBtn = document.getElementById('deleteVideoBtn');
+  const adminModal = document.getElementById('adminModal');
+  const closeAdminBtn = document.getElementById('closeAdminBtn');
+  const cancelAdminBtn = document.getElementById('cancelAdminBtn');
+  const adminForm = document.getElementById('adminForm');
+  const adminPasswordInput = document.getElementById('adminPasswordInput');
+  const adminErrorMsg = document.getElementById('adminErrorMsg');
+
+  function openAdminModal() {
+    adminPasswordInput.value = '';
+    adminErrorMsg.style.display = 'none';
+    adminModal.classList.add('active');
+    setTimeout(() => adminPasswordInput.focus(), 100);
+  }
+
+  function closeAdminModal() {
+    adminModal.classList.remove('active');
+  }
+
+  if (closeAdminBtn) closeAdminBtn.addEventListener('click', closeAdminModal);
+  if (cancelAdminBtn) cancelAdminBtn.addEventListener('click', closeAdminModal);
+
+  if (adminForm) {
+    adminForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const enteredKey = adminPasswordInput.value.trim();
+      if (!enteredKey) return;
+
+      try {
+        const res = await fetch('/api/verify-admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: enteredKey })
+        });
+
+        if (res.ok) {
+          sessionStorage.setItem('adminKey', enteredKey);
+          closeAdminModal();
+          executeDeleteVideo(enteredKey);
+        } else {
+          adminErrorMsg.style.display = 'block';
+        }
+      } catch (err) {
+        console.error(err);
+        adminErrorMsg.textContent = 'Server connection error.';
+        adminErrorMsg.style.display = 'block';
+      }
+    });
+  }
+
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', () => {
+      const savedKey = sessionStorage.getItem('adminKey');
+      if (savedKey) {
+        executeDeleteVideo(savedKey);
+      } else {
+        openAdminModal();
+      }
+    });
+  }
+
+  async function executeDeleteVideo(key) {
+    const confirmed = confirm('Are you sure you want to permanently delete this video? This cannot be undone.');
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/videos/${currentVideoId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ adminKey: key })
+      });
+
+      if (res.ok) {
+        alert('Video deleted successfully.');
+        window.location.href = '/';
+      } else if (res.status === 401) {
+        sessionStorage.removeItem('adminKey');
+        alert('Unauthorized: Invalid admin password.');
+        openAdminModal();
+      } else {
+        const data = await res.json();
+        alert('Failed to delete video: ' + (data.error || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error while deleting video.');
+    }
+  }
 }
 
 // Up next recommendations

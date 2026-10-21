@@ -263,6 +263,45 @@ app.post('/api/videos/:id/comments', (req, res) => {
   res.status(201).json(newComment);
 });
 
+// API: Delete video (Admin only)
+app.delete('/api/videos/:id', (req, res) => {
+  const providedKey = req.body.adminKey || req.headers['x-admin-key'];
+  if (!providedKey || providedKey !== ADMIN_UPLOAD_KEY) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid admin key' });
+  }
+
+  let videos = readVideos();
+  const videoIndex = videos.findIndex((v) => v.id === req.params.id);
+  if (videoIndex === -1) {
+    return res.status(404).json({ error: 'Video not found' });
+  }
+
+  const video = videos[videoIndex];
+
+  // Delete actual video file from disk
+  if (video.videoFileName) {
+    const videoFilePath = path.join(VIDEOS_DIR, video.videoFileName);
+    if (fs.existsSync(videoFilePath)) {
+      try { fs.unlinkSync(videoFilePath); } catch (e) { console.error('Error deleting video file:', e); }
+    }
+  }
+
+  // Delete thumbnail file from disk if uploaded
+  if (video.thumbnailPath && video.thumbnailPath.startsWith('/uploads/thumbnails/')) {
+    const thumbFileName = path.basename(video.thumbnailPath);
+    const thumbFilePath = path.join(THUMBNAILS_DIR, thumbFileName);
+    if (fs.existsSync(thumbFilePath)) {
+      try { fs.unlinkSync(thumbFilePath); } catch (e) { console.error('Error deleting thumbnail file:', e); }
+    }
+  }
+
+  // Remove from database
+  videos.splice(videoIndex, 1);
+  saveVideos(videos);
+
+  res.json({ success: true, message: 'Video deleted successfully' });
+});
+
 // Fallback for HTML pages
 app.get('/watch', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'watch.html'));
