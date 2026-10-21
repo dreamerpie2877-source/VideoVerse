@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VideoVerse - Watch & Share Videos</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <a href="/" class="nav-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+      <span>VideoVerse</span>
+    </a>
+
+    <div class="nav-search">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="text" id="searchInput" placeholder="Search videos by title or creator...">
+    </div>
+
+    <div class="nav-actions">
+      <button class="btn-upload" id="openUploadBtn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Upload Video</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN VIDEO FEED -->
+  <main class="container">
+    <div class="video-grid" id="videoGrid">
+      <!-- Dynamically filled with video cards -->
+    </div>
+  </main>
+
+  <!-- UPLOAD MODAL -->
+  <div class="modal-overlay" id="uploadModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Upload Video</h3>
+        <button class="modal-close-btn" id="closeUploadBtn">&times;</button>
+      </div>
+
+      <form id="uploadForm">
+        <div class="modal-body">
+          <!-- Dropzone -->
+          <div class="dropzone" id="dropzone">
+            <input type="file" id="videoFileInput" accept="video/mp4,video/webm,video/ogg,video/quicktime" style="display: none;">
+            <div class="dropzone-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+            </div>
+            <div class="dropzone-text">Click to choose or drag & drop video here</div>
+            <div class="dropzone-sub">MP4, WebM, MOV supported (up to 500MB)</div>
+          </div>
+
+          <!-- Selected File Pill -->
+          <div class="file-preview-banner" id="filePreviewBanner">
+            <span id="selectedFileName" style="font-size: 0.9rem; font-weight: 500;"></span>
+            <button type="button" id="removeFileBtn" style="background: none; color: var(--accent); font-size: 0.85rem; font-weight: 600;">Remove</button>
+          </div>
+
+          <!-- Video Title -->
+          <div class="form-group">
+            <label for="videoTitle">Title *</label>
+            <input type="text" id="videoTitle" name="title" placeholder="Give your video a catchy title" required>
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <label for="videoDescription">Description</label>
+            <textarea id="videoDescription" name="description" rows="3" placeholder="Tell viewers what your video is about..."></textarea>
+          </div>
+
+
+          <!-- Thumbnail Auto-generation preview & option -->
+          <div class="form-group">
+            <label>Thumbnail</label>
+            <div class="thumbnail-preview-row">
+              <div class="thumb-preview-box" id="thumbPreviewBox">
+                <span style="font-size: 0.75rem; color: var(--text-sub);">Auto Frame</span>
+              </div>
+              <div>
+                <input type="file" id="thumbnailFileInput" accept="image/*" style="font-size: 0.85rem;">
+                <p style="font-size: 0.75rem; color: var(--text-sub); margin-top: 4px;">Leave empty to auto-extract thumbnail from video frame</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Upload Progress -->
+          <div class="upload-progress-wrapper" id="uploadProgressWrapper">
+            <div class="progress-track">
+              <div class="progress-fill" id="uploadProgressFill"></div>
+            </div>
+            <div class="upload-progress-status">
+              <span id="uploadStatusText">Uploading...</span>
+              <span id="uploadPercentText">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="cancelUploadBtn">Cancel</button>
+          <button type="submit" class="btn-primary" id="submitUploadBtn">Publish Video</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- HIDDEN CANVAS & VIDEO FOR THUMBNAIL SNAPSHOT -->
+  <video id="snapshotVideo" style="display: none;" preload="metadata" muted></video>
+  <canvas id="snapshotCanvas" style="display: none;"></canvas>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

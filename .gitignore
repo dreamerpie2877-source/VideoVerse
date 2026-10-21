@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Uploaded video files & thumbnails (avoid uploading huge media files to git)
+uploads/videos/*
+!uploads/videos/.gitkeep
+uploads/thumbnails/*
+!uploads/thumbnails/.gitkeep
+
+# Environment & OS files
+.DS_Store
+Thumbs.db
+*.log
+.env
