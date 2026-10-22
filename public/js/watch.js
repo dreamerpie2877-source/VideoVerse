@@ -83,8 +83,9 @@ async function loadVideoDetails(id) {
     const video = await res.json();
     document.title = `${video.title} - VideoVerse`;
 
-    // Stream source via HTTP 206 partial content endpoint
-    player.loadSource(`/api/videos/${id}/stream`);
+    // Stream source (directly from Cloudflare R2 CDN if available, or through streaming endpoint)
+    const videoSource = (video.videoPath && video.videoPath.startsWith('http')) ? video.videoPath : `/api/videos/${id}/stream`;
+    player.loadSource(videoSource);
 
     // Metadata
     document.getElementById('videoTitle').textContent = video.title;
