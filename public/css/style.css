@@ -1154,6 +1154,89 @@ input, textarea, select {
 }
 
 /* ========================================================
+   ADSTERRA ADS STYLING
+   ======================================================== */
+.ad-banner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 1.25rem auto;
+  text-align: center;
+  min-height: 60px;
+}
+
+.ad-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-sub);
+  margin-bottom: 0.35rem;
+}
+
+.sponsored-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  background: linear-gradient(135deg, rgba(255, 180, 0, 0.15), rgba(255, 100, 0, 0.15));
+  border: 1px solid rgba(255, 180, 0, 0.35);
+  color: #ffb830;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.sponsored-pill:hover {
+  background: linear-gradient(135deg, rgba(255, 180, 0, 0.25), rgba(255, 100, 0, 0.25));
+  border-color: rgba(255, 180, 0, 0.6);
+  transform: translateY(-1px);
+}
+
+.sponsored-card-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, rgba(255, 51, 75, 0.1), rgba(255, 180, 0, 0.1));
+  border: 1px solid rgba(255, 180, 0, 0.3);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  color: var(--text-main);
+  transition: all 0.2s;
+}
+
+.sponsored-card-banner:hover {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, rgba(255, 51, 75, 0.18), rgba(255, 180, 0, 0.18));
+  transform: translateY(-2px);
+}
+
+.sponsored-tag {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  color: #ffb830;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.sponsored-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.sponsored-btn {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-top: 0.25rem;
+}
+
+/* ========================================================
    COMPREHENSIVE RESPONSIVE DESIGN (DESKTOP, TABLET, MOBILE)
    ======================================================== */
 
