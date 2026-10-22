@@ -181,6 +181,15 @@ function initWatchPageActions() {
     }
   });
 
+  // Download Video
+  const downloadBtn = document.getElementById('downloadBtn');
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', () => {
+      showToast('Starting video download...');
+      window.location.href = `/api/videos/${currentVideoId}/download`;
+    });
+  }
+
   // Share
   shareBtn.addEventListener('click', () => {
     const url = window.location.href;

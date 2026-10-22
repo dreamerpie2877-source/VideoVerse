@@ -210,6 +210,26 @@ app.get('/api/videos/:id/stream', (req, res) => {
   }
 });
 
+// API: Download video file
+app.get('/api/videos/:id/download', (req, res) => {
+  const videos = readVideos();
+  const video = videos.find((v) => v.id === req.params.id);
+  if (!video) {
+    return res.status(404).send('Video not found');
+  }
+
+  const filePath = path.join(VIDEOS_DIR, video.videoFileName);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send('Video file does not exist on disk');
+  }
+
+  const ext = path.extname(video.videoFileName) || '.mp4';
+  const cleanTitle = (video.title || 'video').replace(/[/\\?%*:|"<>]/g, '_');
+  const downloadFileName = `${cleanTitle}${ext}`;
+
+  res.download(filePath, downloadFileName);
+});
+
 // API: Increment views
 app.post('/api/videos/:id/view', (req, res) => {
   const videos = readVideos();

@@ -97,16 +97,22 @@ async function loadVideos() {
     }
 
     grid.innerHTML = videos.map(video => `
-      <div class="video-card" onclick="window.location.href='/watch?v=${video.id}'">
-        <div class="card-thumbnail-wrap">
+      <div class="video-card">
+        <div class="card-thumbnail-wrap" onclick="window.location.href='/watch?v=${video.id}'">
           <img class="card-thumbnail" src="${video.thumbnailPath}" alt="${escapeHtml(video.title)}" loading="lazy">
           <span class="card-duration">${video.duration || '0:00'}</span>
         </div>
         <div class="card-content">
           <div class="card-details" style="width: 100%;">
-            <h3 class="card-title" title="${escapeHtml(video.title)}">${escapeHtml(video.title)}</h3>
-            <div class="card-meta">
-              <span>${formatViews(video.views)}</span> • <span>${timeAgo(video.createdAt)}</span>
+            <h3 class="card-title" onclick="window.location.href='/watch?v=${video.id}'" title="${escapeHtml(video.title)}" style="cursor: pointer;">${escapeHtml(video.title)}</h3>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px;">
+              <div class="card-meta">
+                <span>${formatViews(video.views)}</span> • <span>${timeAgo(video.createdAt)}</span>
+              </div>
+              <button class="btn-card-delete" onclick="handleCardDelete(event, '${video.id}')" title="Delete video" style="background: rgba(255, 77, 99, 0.15); border: 1px solid rgba(255, 77, 99, 0.4); color: #ff4d63; border-radius: 6px; padding: 4px 8px; font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: background 0.2s;">
+                <svg style="width: 14px; height: 14px; fill: currentColor;" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                <span>Delete</span>
+              </button>
             </div>
           </div>
         </div>
@@ -115,6 +121,55 @@ async function loadVideos() {
   } catch (err) {
     console.error('Failed to load videos:', err);
     grid.innerHTML = '<div style="color: var(--accent); padding: 2rem;">Error loading videos. Please make sure the server is running.</div>';
+  }
+}
+
+window.pendingDeleteId = null;
+
+async function handleCardDelete(e, videoId) {
+  if (e) e.stopPropagation();
+
+  const savedKey = sessionStorage.getItem('adminKey');
+  if (!savedKey) {
+    window.pendingDeleteId = videoId;
+    const adminModal = document.getElementById('adminModal');
+    const adminPasswordInput = document.getElementById('adminPasswordInput');
+    const adminErrorMsg = document.getElementById('adminErrorMsg');
+    adminPasswordInput.value = '';
+    adminErrorMsg.style.display = 'none';
+    adminModal.classList.add('active');
+    setTimeout(() => adminPasswordInput.focus(), 100);
+    return;
+  }
+
+  executeDelete(videoId, savedKey);
+}
+
+async function executeDelete(videoId, key) {
+  const confirmed = confirm('Are you sure you want to permanently delete this video?');
+  if (!confirmed) return;
+
+  try {
+    const res = await fetch(`/api/videos/${videoId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminKey: key })
+    });
+
+    if (res.ok) {
+      showToast('Video deleted successfully.');
+      loadVideos();
+    } else if (res.status === 401) {
+      sessionStorage.removeItem('adminKey');
+      alert('Unauthorized: Invalid or expired admin password.');
+      handleCardDelete(null, videoId);
+    } else {
+      const data = await res.json();
+      alert('Failed to delete video: ' + (data.error || 'Unknown error'));
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Network error while deleting video.');
   }
 }
 
@@ -204,7 +259,13 @@ function initUploadModal() {
       if (res.ok) {
         sessionStorage.setItem('adminKey', enteredKey);
         closeAdminModal();
-        openModal();
+        if (window.pendingDeleteId) {
+          const targetId = window.pendingDeleteId;
+          window.pendingDeleteId = null;
+          executeDelete(targetId, enteredKey);
+        } else {
+          openModal();
+        }
       } else {
         adminErrorMsg.style.display = 'block';
       }
