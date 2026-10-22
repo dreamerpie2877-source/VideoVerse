@@ -76,6 +76,15 @@ class CustomPlayer {
     window.addEventListener('mousemove', (e) => this.scrub(e));
     window.addEventListener('mouseup', () => this.stopScrubbing());
 
+    // Touch Scrubbing for Mobile & Tablets
+    this.progressContainer.addEventListener('touchstart', (e) => this.startScrubbing(e), { passive: true });
+    window.addEventListener('touchmove', (e) => {
+      if (this.isScrubbing) {
+        this.scrub(e);
+      }
+    }, { passive: true });
+    window.addEventListener('touchend', () => this.stopScrubbing());
+
     // Hover tooltip
     this.progressContainer.addEventListener('mousemove', (e) => this.updateTooltip(e));
     this.progressContainer.addEventListener('mouseleave', () => {
@@ -154,6 +163,19 @@ class CustomPlayer {
       }
     });
 
+    // Mobile Touch Show / Hide Controls
+    this.wrapper.addEventListener('touchstart', (e) => {
+      if (e.target.closest('#playerControls')) return;
+      if (this.wrapper.classList.contains('user-active') && !this.video.paused) {
+        this.hideControls();
+      } else {
+        this.showControls();
+        if (!this.video.paused) {
+          this.startHideControlsTimer();
+        }
+      }
+    }, { passive: true });
+
     // Keyboard Shortcuts
     window.addEventListener('keydown', (e) => {
       const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
@@ -231,6 +253,12 @@ class CustomPlayer {
     return `${m}:${s.toString().padStart(2, '0')}`;
   }
 
+  getClientX(e) {
+    if (e.touches && e.touches.length > 0) return e.touches[0].clientX;
+    if (e.changedTouches && e.changedTouches.length > 0) return e.changedTouches[0].clientX;
+    return e.clientX;
+  }
+
   startScrubbing(e) {
     this.isScrubbing = true;
     this.scrub(e);
@@ -239,7 +267,9 @@ class CustomPlayer {
   scrub(e) {
     if (!this.isScrubbing || !this.video.duration) return;
     const rect = this.progressContainer.getBoundingClientRect();
-    const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const clientX = this.getClientX(e);
+    if (clientX === undefined) return;
+    const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     this.progressBarFill.style.width = (pos * 100) + '%';
     this.progressScrubber.style.left = (pos * 100) + '%';
     this.video.currentTime = pos * this.video.duration;
