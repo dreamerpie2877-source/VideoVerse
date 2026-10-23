@@ -67,9 +67,65 @@ function readVideos() {
   }
 }
 
+async function syncDbToR2() {
+  if (s3Client && S3Upload) {
+    try {
+      const upload = new S3Upload({
+        client: s3Client,
+        params: {
+          Bucket: R2_BUCKET_NAME,
+          Key: 'data/videos.json',
+          Body: fs.readFileSync(DB_FILE, 'utf8'),
+          ContentType: 'application/json',
+        },
+      });
+      await upload.done();
+      console.log('[R2] Database successfully backed up to Cloudflare R2');
+    } catch (e) {
+      console.error('[R2] Error syncing database to R2:', e.message);
+    }
+  }
+}
+
 function saveVideos(videos) {
   fs.writeFileSync(DB_FILE, JSON.stringify(videos, null, 2));
+  // Asynchronously back up database to Cloudflare R2 so it never disappears on server restart!
+  syncDbToR2().catch(e => console.error(e));
 }
+
+async function initDbFromR2() {
+  if (!s3Client) return;
+  try {
+    const { GetObjectCommand } = require('@aws-sdk/client-s3');
+    const res = await s3Client.send(new GetObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: 'data/videos.json'
+    }));
+
+    const streamToString = (stream) =>
+      new Promise((resolve, reject) => {
+        const chunks = [];
+        stream.on('data', (chunk) => chunks.push(chunk));
+        stream.on('error', reject);
+        stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+      });
+
+    const data = await streamToString(res.Body);
+    if (data && data.trim()) {
+      fs.writeFileSync(DB_FILE, data);
+      console.log('[R2] Loaded persistent database from Cloudflare R2 successfully');
+    }
+  } catch (err) {
+    if (err.name === 'NoSuchKey' || err.$metadata?.httpStatusCode === 404) {
+      console.log('[R2] No existing data/videos.json found in R2 yet. Starting fresh.');
+    } else {
+      console.warn('[R2] Notice loading database from R2:', err.message);
+    }
+  }
+}
+
+// Load database from R2 on startup if available
+initDbFromR2().catch(e => console.error(e));
 
 // Multer storage config
 const storage = multer.diskStorage({
